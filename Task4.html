@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simple To-Do App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background: #f9f9f9;
+    }
+    h2 {
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .task {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+      padding: 10px;
+      background: #f1f1f1;
+      border-radius: 6px;
+    }
+    .task.completed {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .task-info {
+      flex: 1;
+    }
+    input, button, select {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .task button {
+      margin-left: 5px;
+    }
+    .list-select {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📝 My To-Do List</h2>
+
+    <input type="text" id="taskInput" placeholder="Enter task..." />
+    <input type="datetime-local" id="taskDateTime" />
+    
+    <input type="text" id="listNameInput" placeholder="Enter list name (e.g., Work, Personal)" />
+    <button onclick="addTask()">Add Task</button>
+
+    <div class="list-select">
+      <label for="listFilter">Filter by List:</label>
+      <select id="listFilter" onchange="renderTasks()">
+        <option value="">All Lists</option>
+      </select>
+    </div>
+
+    <div id="taskList"></div>
+  </div>
+
+  <script>
+    let tasks = [];
+
+    function addTask() {
+      const taskInput = document.getElementById("taskInput");
+      const taskDateTime = document.getElementById("taskDateTime");
+      const listNameInput = document.getElementById("listNameInput");
+
+      if (taskInput.value.trim() === "") return alert("Task cannot be empty");
+
+      const task = {
+        id: Date.now(),
+        text: taskInput.value,
+        dateTime: taskDateTime.value,
+        list: listNameInput.value.trim(),
+        completed: false
+      };
+
+      tasks.push(task);
+      updateListFilter();
+      renderTasks();
+
+      taskInput.value = "";
+      taskDateTime.value = "";
+      listNameInput.value = "";
+    }
+
+    function renderTasks() {
+      const taskList = document.getElementById("taskList");
+      const selectedList = document.getElementById("listFilter").value;
+      taskList.innerHTML = "";
+
+      const filteredTasks = selectedList
+        ? tasks.filter(task => task.list === selectedList)
+        : tasks;
+
+      filteredTasks.forEach(task => {
+        const div = document.createElement("div");
+        div.className = "task" + (task.completed ? " completed" : "");
+        
+        const info = document.createElement("div");
+        info.className = "task-info";
+        info.innerHTML = `<strong>${task.text}</strong><br><small>${task.dateTime || ""} (${task.list || "General"})</small>`;
+
+        const btns = document.createElement("div");
+
+        const completeBtn = document.createElement("button");
+        completeBtn.textContent = task.completed ? "Undo" : "Done";
+        completeBtn.onclick = () => toggleComplete(task.id);
+        btns.appendChild(completeBtn);
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => editTask(task.id);
+        btns.appendChild(editBtn);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.onclick = () => deleteTask(task.id);
+        btns.appendChild(deleteBtn);
+
+        div.appendChild(info);
+        div.appendChild(btns);
+        taskList.appendChild(div);
+      });
+    }
+
+    function toggleComplete(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.completed = !task.completed;
+        renderTasks();
+      }
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      renderTasks();
+    }
+
+    function editTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const newText = prompt("Edit task text:", task.text);
+      if (newText !== null && newText.trim() !== "") task.text = newText;
+
+      const newDateTime = prompt("Edit date/time (optional):", task.dateTime);
+      if (newDateTime !== null) task.dateTime = newDateTime;
+
+      const newList = prompt("Edit list (optional):", task.list);
+      if (newList !== null) task.list = newList.trim();
+
+      updateListFilter();
+      renderTasks();
+    }
+
+    function updateListFilter() {
+      const listFilter = document.getElementById("listFilter");
+      const lists = [...new Set(tasks.map(t => t.list).filter(l => l))];
+
+      listFilter.innerHTML = `<option value="">All Lists</option>`;
+      lists.forEach(list => {
+        const option = document.createElement("option");
+        option.value = list;
+        option.textContent = list;
+        listFilter.appendChild(option);
+      });
+    }
+  </script>
+</body>
+</html>
